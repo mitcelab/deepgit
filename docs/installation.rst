@@ -32,13 +32,13 @@ You can either clone the public repository:
 
 .. code-block:: console
 
-    $ git clone git://github.com/k15z/deepgit
+    $ git clone git://github.com/mitcelab/deepgit
 
 Or download the `tarball`_:
 
 .. code-block:: console
 
-    $ curl  -OL https://github.com/k15z/deepgit/tarball/master
+    $ curl  -OL https://github.com/mitcelab/deepgit/tarball/master
 
 Once you have a copy of the source, you can install it with:
 
@@ -47,5 +47,5 @@ Once you have a copy of the source, you can install it with:
     $ python setup.py install
 
 
-.. _Github repo: https://github.com/k15z/deepgit
-.. _tarball: https://github.com/k15z/deepgit/tarball/master
+.. _Github repo: https://github.com/mitcelab/deepgit
+.. _tarball: https://github.com/mitcelab/deepgit/tarball/master

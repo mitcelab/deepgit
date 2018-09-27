@@ -6,7 +6,7 @@
 import pytest
 
 
-from deepgit import deepgit
+import deepgit
 
 
 @pytest.fixture

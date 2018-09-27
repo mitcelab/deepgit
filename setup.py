@@ -44,7 +44,7 @@ setup(
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,
-    url='https://github.com/k15z/deepgit',
+    url='https://github.com/mitcelab/deepgit',
     version='0.0.1',
     zip_safe=False,
 )

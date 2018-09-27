@@ -6,8 +6,8 @@ deepgit
 .. image:: https://img.shields.io/pypi/v/deepgit.svg
         :target: https://pypi.python.org/pypi/deepgit
 
-.. image:: https://img.shields.io/travis/k15z/deepgit.svg
-        :target: https://travis-ci.org/k15z/deepgit
+.. image:: https://img.shields.io/travis/mitcelab/deepgit.svg
+        :target: https://travis-ci.org/mitcelab/deepgit
 
 .. image:: https://readthedocs.org/projects/deepgit/badge/?version=latest
         :target: https://deepgit.readthedocs.io/en/latest/?badge=latest
