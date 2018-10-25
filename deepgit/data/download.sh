@@ -1,6 +1,6 @@
 #!/bin/bash
 
 while read p; do
-	cd /Volumes/Aaron\'s\ Drive/deepgit
+	cd ./repos
 	git clone "$p" 
 done <github_urls.txt

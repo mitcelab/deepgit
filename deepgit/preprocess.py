@@ -9,8 +9,8 @@ repo_to_file = {}
 repo_dict = {}
 
 def makeRepoFile(path):
-	for d in os.listdir(path + 'deepgit/data/'):
-		files = getFiles(path + 'deepgit/data/' + d)
+	for d in os.listdir(path):
+		files = getFiles(path + d)
 		if files:
 			repo_to_file[d] = files
 
@@ -51,9 +51,9 @@ def makeTensors():
 
 			except Exception as e:
 				print('skip', path, e)
-
+	print (Counter(word_counts).most_common(100))
 	# create word to index of words across all files
-	for word, count in Counter(word_counts).most_common(640):
+	for word, count in Counter(word_counts).most_common(6400):
 		word_to_i[word] = len(word_to_i)
 
 	# create tensors 
@@ -74,7 +74,7 @@ def makeTensors():
 		repo_to_tensor[repo] = training_pairs
 	return repo_to_tensor
 
-makeRepoFile('/Users/aaronhuang/')
+makeRepoFile('./data/repos/')
 makeRepoDict()
 training_pairs = makeTensors()
 print (training_pairs.keys())
