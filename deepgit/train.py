@@ -52,7 +52,8 @@ def run(epoch, mode = "train"):
 
 			candidate = encoder(X, toggle=False)
 			for i in range(num_samples):
-				similarity_scores[0][i] = F.cosine_similarity(base,candidate[i].unsqueeze(0))
+				# similarity_scores[0][i] = F.cosine_similarity(base,candidate[i].unsqueeze(0))
+				similarity_scores[0][i] = torch.dot(base[0],candidate[i])
 
 			Y_pred = torch.tensor(similarity_scores)
 			loss += F.cross_entropy(Y_pred, torch.LongTensor([0]))
