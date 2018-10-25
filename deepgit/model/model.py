@@ -10,9 +10,11 @@ class Encoder(nn.Module):
 		self.linear1 = nn.Linear(embedding_dim*2, hidden_dim)
 		self.linear2 = nn.Linear(embedding_dim*2, hidden_dim)
 
-	def forward(self, x):
+	def forward(self, x, toggle=True):
 		x = self.embed(x)
 		h, _ = self.rnn(x)
 		h = torch.mean(F.selu(h), dim=1)
 		h = torch.cat([torch.mean(x, dim=1), h], dim=1)
-		return self.linear1(h)
+		if toggle:
+			return self.linear1(h)
+		return self.linear2(h)

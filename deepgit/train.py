@@ -5,7 +5,7 @@ to `weights/*.pt`.
 """
 from model.model import *
 import torch.optim as optim
-import random
+from random import choice, sample
 import pickle
 import argparse
 
@@ -30,12 +30,6 @@ encoder = Encoder(args.num_embeddings,args.embedding_dim,args.hidden_dim).to(arg
 optimizer = optim.Adam(encoder.parameters())
 scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min')
 
-base_repo = random.choice(list(repo_to_tensors.keys()))
-while len(repo_to_tensors[base_repo]) < 2: 
-	base_repo = random.choice(list(repo_to_tensors.keys()))
-base = encoder(repo_to_tensors[base_repo][0])
-c1 = encoder(repo_to_tensors[base_repo][1])
-
 num_samples = 5
 
 def run(epoch, mode = "train"):
@@ -43,23 +37,27 @@ def run(epoch, mode = "train"):
 	score = 0
 	for r in repo_to_tensors.keys():
 		if len(repo_to_tensors[r]) > 1:
-			base_pair = random.sample(repo_to_tensors[r], 2)
+			base_pair = sample(repo_to_tensors[r], 2)
 
-			base = encoder(base_pair[0])
-			c1 = encoder(base_pair[1])
+			base = encoder(base_pair[0], toggle=True)
+			c1 = encoder(base_pair[1], toggle=False)
 			similarity_scores = torch.zeros(1,num_samples+1)
 			similarity_scores[0][0] = F.cosine_similarity(base,c1)
 
 			comp_repos = list(repo_to_tensors.keys())
 			comp_repos.remove(r)
+			X = [choice(repo_to_tensors[choice(comp_repos)])[0] for i in range(num_samples)]
 
+			X = torch.stack(X,dim=0).to(args.device)
+
+			candidate = encoder(X, toggle=False)
 			for i in range(num_samples):
-				candidate = encoder(random.choice(repo_to_tensors[random.choice(comp_repos)]))
-				similarity_scores[0][i] = F.cosine_similarity(base,candidate)
+				similarity_scores[0][i] = F.cosine_similarity(base,candidate[i].unsqueeze(0))
 
 			Y_pred = torch.tensor(similarity_scores)
 			loss += F.cross_entropy(Y_pred, torch.LongTensor([0]))
 			score += int(torch.argmax(Y_pred).item() == 0)
+
 	loss /= len(repo_to_tensors)
 	score /= len(repo_to_tensors)
 
@@ -73,7 +71,7 @@ def run(epoch, mode = "train"):
 
 	if mode == "test":
 		torch.save(encoder, "weights/weights.epoch-%s.loss-%.03f.pt" % (epoch, loss.item()))
-		
+
 	return loss.item(), score
 
 for epoch in range(20):
