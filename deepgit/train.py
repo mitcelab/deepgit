@@ -31,11 +31,14 @@ optimizer = optim.Adam(encoder.parameters())
 scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min')
 
 num_samples = 5
+num_repos = 10
 
 def run(epoch, mode = "train"):
 	loss = 0
 	score = 0
-	for r in repo_to_tensors.keys():
+
+	repos = sample(list(repo_to_tensors.keys()), num_repos)
+	for r in repos:
 		if len(repo_to_tensors[r]) > 1:
 			base_pair = sample(repo_to_tensors[r], 2)
 
@@ -44,10 +47,13 @@ def run(epoch, mode = "train"):
 			similarity_scores = torch.zeros(1,num_samples+1)
 			similarity_scores[0][0] = F.cosine_similarity(base,c1)
 
-			comp_repos = list(repo_to_tensors.keys())
+			comp_repos = repos
 			comp_repos.remove(r)
-			X = [choice(repo_to_tensors[choice(comp_repos)])[0] for i in range(num_samples)]
 
+			X = [choice(repo_to_tensors[choice(comp_repos)])[0][:10000] for i in range(num_samples)]
+			max_len = max(x.size()[0] for x in X)
+			for i, x in enumerate(X):
+				X[i] = F.pad(x, (max_len-x.size()[0],0), "constant", 0)
 			X = torch.stack(X,dim=0).to(args.device)
 
 			candidate = encoder(X, toggle=False)
@@ -59,8 +65,8 @@ def run(epoch, mode = "train"):
 			loss += F.cross_entropy(Y_pred, torch.LongTensor([0]))
 			score += int(torch.argmax(Y_pred).item() == 0)
 
-	loss /= len(repo_to_tensors)
-	score /= len(repo_to_tensors)
+	loss /= num_repos
+	score /= num_repos
 
 	print('iter', epoch, loss.item(), score)
 	
@@ -69,6 +75,7 @@ def run(epoch, mode = "train"):
 		torch.nn.utils.clip_grad_norm_(encoder.parameters(), 0.25)
 		optimizer.step()
 		optimizer.zero_grad()
+	print('trained')
 
 	if mode == "test":
 		torch.save(encoder, "weights/weights.epoch-%s.loss-%.03f.pt" % (epoch, loss.item()))

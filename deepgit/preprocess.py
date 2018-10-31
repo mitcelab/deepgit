@@ -3,6 +3,7 @@ import torch
 from collections import Counter
 import os
 import pickle
+import matplotlib.pyplot as plt
 
 word_to_i = {'UNKNOWN':0}
 repo_to_file = {}
@@ -57,18 +58,21 @@ def makeTensors():
 		word_to_i[word] = len(word_to_i)
 
 	# create tensors 
-	# list[ (doc_tensor,document) ]
-	dim = len(word_lists[max(word_lists, key=lambda x: len(word_lists[x]))])
-	dim = min(dim, 10240)
 	
+	# word_lengths = []
+	# for _,doc in word_lists.items():
+	# 	word_lengths.append(len(doc))
+	# plt.hist(x=word_lengths, bins=10, range=(0,10000))
+	# plt.show()
+
 	repo_to_tensor = {}
 	count = 0
 	for repo,files in repo_to_file.items():
 		training_pairs = []
 		for path in files:
-			doc_tensor = torch.zeros(1,dim, dtype=torch.long)
-			if path in word_lists:
-				for wi, word in enumerate(word_lists[path][:dim]):
+			if path in word_lists and word_lists[path]:
+				doc_tensor = torch.zeros(1,len(word_lists[path]), dtype=torch.long)
+				for wi, word in enumerate(word_lists[path]):
 					doc_tensor[0][wi] = word_to_i[word] if word in word_to_i else word_to_i['UNKNOWN']
 				training_pairs.append(doc_tensor)
 		repo_to_tensor[repo] = training_pairs
