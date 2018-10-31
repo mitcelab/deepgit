@@ -34,7 +34,8 @@ num_samples = 5
 num_repos = 100
 
 def run(epoch, mode = "train"):
-	loss = 0
+	
+	total_loss = 0
 	score = 0
 
 	# repos = sample(list(repo_to_tensors.keys()), num_repos)
@@ -62,7 +63,9 @@ def run(epoch, mode = "train"):
 				similarity_scores[0][i] = torch.dot(base[0],candidate[i])
 
 			Y_pred = torch.tensor(similarity_scores)
-			loss += F.cross_entropy(Y_pred, torch.LongTensor([0]))
+
+			loss = F.cross_entropy(Y_pred, torch.LongTensor([0]))
+			total_loss += loss.item()
 			score += int(torch.argmax(Y_pred).item() == 0)
 
 			if mode == "train":
@@ -72,7 +75,7 @@ def run(epoch, mode = "train"):
 				optimizer.zero_grad()
 
 	# loss /= num_repos
-	# score /= num_repos
+	score /= num_repos
 
 	print('iter', epoch, loss.item(), score)
 	
