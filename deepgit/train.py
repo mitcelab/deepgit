@@ -27,18 +27,18 @@ args.device = torch.device('cuda') if torch.cuda.is_available() else torch.devic
 
 Y_target = torch.LongTensor([0]).to(args.device)
 encoder = Encoder(args.num_embeddings,args.embedding_dim,args.hidden_dim).to(args.device)
-optimizer = optim.Adam(encoder.parameters())
+optimizer = optim.Adam(encoder.parameters(), lr=0.001)
 scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min')
 
 num_samples = 5
-num_repos = 10
+num_repos = 100
 
 def run(epoch, mode = "train"):
 	loss = 0
 	score = 0
 
-	repos = sample(list(repo_to_tensors.keys()), num_repos)
-	for r in repos:
+	# repos = sample(list(repo_to_tensors.keys()), num_repos)
+	for r in list(repo_to_tensors.keys()):
 		if len(repo_to_tensors[r]) > 1:
 			base_pair = sample(repo_to_tensors[r], 2)
 
@@ -47,7 +47,7 @@ def run(epoch, mode = "train"):
 			similarity_scores = torch.zeros(1,num_samples+1)
 			similarity_scores[0][0] = F.cosine_similarity(base,c1)
 
-			comp_repos = repos
+			comp_repos = list(repo_to_tensors.keys())
 			comp_repos.remove(r)
 
 			X = [choice(repo_to_tensors[choice(comp_repos)])[0][:10000] for i in range(num_samples)]
@@ -65,16 +65,17 @@ def run(epoch, mode = "train"):
 			loss += F.cross_entropy(Y_pred, torch.LongTensor([0]))
 			score += int(torch.argmax(Y_pred).item() == 0)
 
-	loss /= num_repos
-	score /= num_repos
+			if mode == "train":
+				loss.backward()
+				torch.nn.utils.clip_grad_norm_(encoder.parameters(), 0.25)
+				optimizer.step()
+				optimizer.zero_grad()
+
+	# loss /= num_repos
+	# score /= num_repos
 
 	print('iter', epoch, loss.item(), score)
 	
-	if mode == "train":
-		loss.backward()
-		torch.nn.utils.clip_grad_norm_(encoder.parameters(), 0.25)
-		optimizer.step()
-		optimizer.zero_grad()
 	print('trained')
 
 	if mode == "test":
