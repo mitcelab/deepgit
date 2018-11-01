@@ -11,7 +11,7 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--nb_epochs', type=int, default=32)
-parser.add_argument('--batch_size', type=int, default=256)
+# parser.add_argument('--batch_size', type=int, default=256)
 parser.add_argument('--hidden_dim', type=int, default=300)
 parser.add_argument('--embedding_dim', type=int, default=300)
 args = parser.parse_args()
@@ -38,20 +38,21 @@ def run(epoch, mode = "train"):
 	total_loss = 0
 	score = 0
 
+	repos = list(repo_to_tensors.keys())
 	# repos = sample(list(repo_to_tensors.keys()), num_repos)
-	for r in list(repo_to_tensors.keys()):
+	for r in repos:
 		if len(repo_to_tensors[r]) > 1:
 			base_pair = sample(repo_to_tensors[r], 2)
 
-			base = encoder(base_pair[0], toggle=True)
-			c1 = encoder(base_pair[1], toggle=False)
+			base = encoder(base_pair[0].to(args.device), toggle=True)
+			c1 = encoder(base_pair[1].to(args.device), toggle=False)
 			similarity_scores = torch.zeros(1,num_samples+1)
-			similarity_scores[0][0] = F.cosine_similarity(base,c1)
+			similarity_scores[0][0] = torch.dot(base[0],c1[0])
 
-			comp_repos = list(repo_to_tensors.keys())
+			comp_repos = repos
 			comp_repos.remove(r)
 
-			X = [choice(repo_to_tensors[choice(comp_repos)])[0][:10000] for i in range(num_samples)]
+			X = [choice(repo_to_tensors[choice(comp_repos)])[0][:1000] for i in range(num_samples)]
 			max_len = max(x.size()[0] for x in X)
 			for i, x in enumerate(X):
 				X[i] = F.pad(x, (max_len-x.size()[0],0), "constant", 0)
@@ -74,19 +75,18 @@ def run(epoch, mode = "train"):
 				optimizer.step()
 				optimizer.zero_grad()
 
-	# loss /= num_repos
-	score /= num_repos
+	total_loss /= len(repos)
+	score /= len(repos)
 
 	print('iter', epoch, loss.item(), score)
-	
-	print('trained')
 
 	if mode == "test":
 		torch.save(encoder, "weights/weights.epoch-%s.loss-%.03f.pt" % (epoch, loss.item()))
 
+	torch.cuda.empty_cache()
 	return loss.item(), score
 
 for epoch in range(20):
 	train_loss,train_acc = run(epoch, mode="train")
-	test_loss,test_acc = run(epoch, mode="test")
+	# test_loss,test_acc = run(epoch, mode="test")
 	# print(train_loss,train_acc,test_loss,test_acc)
