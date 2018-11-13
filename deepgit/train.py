@@ -27,11 +27,10 @@ args.device = torch.device('cuda') if torch.cuda.is_available() else torch.devic
 
 Y_target = torch.LongTensor([0]).to(args.device)
 encoder = Encoder(args.num_embeddings,args.embedding_dim,args.hidden_dim).to(args.device)
-optimizer = optim.Adam(encoder.parameters(), lr=0.001)
+optimizer = optim.Adam(encoder.parameters(), lr=0.0001)
 scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min')
 
-num_samples = 5
-num_repos = 100
+num_samples = 10
 
 def run(epoch, mode = "train"):
 	
@@ -39,7 +38,6 @@ def run(epoch, mode = "train"):
 	score = 0
 
 	repos = list(repo_to_tensors.keys())
-	# repos = sample(list(repo_to_tensors.keys()), num_repos)
 	for r in repos:
 		if len(repo_to_tensors[r]) > 1:
 			base_pair = sample(repo_to_tensors[r], 2)
@@ -86,7 +84,12 @@ def run(epoch, mode = "train"):
 	torch.cuda.empty_cache()
 	return loss.item(), score
 
-for epoch in range(20):
+for epoch in range(2000):
 	train_loss,train_acc = run(epoch, mode="train")
+	test_loss,test_acc = run(epoch, mode="test")
+	if train_loss < 0.5:
+		for e2 in range(10):
+			test_loss,test_acc = run(epoch, mode="test")
+			print (test_loss)
 	# test_loss,test_acc = run(epoch, mode="test")
 	# print(train_loss,train_acc,test_loss,test_acc)
