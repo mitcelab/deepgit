@@ -3,6 +3,7 @@
 When this script is executed, it should train a model and write the weights
 to `weights/*.pt`.
 """
+import gc
 from model.model import *
 import torch.optim as optim
 from random import choice, sample
@@ -72,6 +73,8 @@ def run(epoch, mode = "train"):
 				torch.nn.utils.clip_grad_norm_(encoder.parameters(), 0.25)
 				optimizer.step()
 				optimizer.zero_grad()
+		torch.cuda.empty_cache()
+		gc.collect()
 
 	total_loss /= len(repos)
 	score /= len(repos)
@@ -79,17 +82,31 @@ def run(epoch, mode = "train"):
 	print('iter', epoch, loss.item(), score)
 
 	if mode == "test":
+
 		torch.save(encoder, "weights/weights.epoch-%s.loss-%.03f.pt" % (epoch, loss.item()))
 
+	gc.collect()
 	torch.cuda.empty_cache()
 	return loss.item(), score
 
 for epoch in range(2000):
 	train_loss,train_acc = run(epoch, mode="train")
 	test_loss,test_acc = run(epoch, mode="test")
-	if train_loss < 0.5:
-		for e2 in range(10):
-			test_loss,test_acc = run(epoch, mode="test")
-			print (test_loss)
-	# test_loss,test_acc = run(epoch, mode="test")
-	# print(train_loss,train_acc,test_loss,test_acc)
+	scheduler.step(test_loss)
+	print(train_loss,train_acc,test_loss,test_acc)
+
+# X = []
+# repos = list(repo_to_tensors.keys())
+# for r in repos:
+#         for tensor in repo_to_tensors[r]:
+#                 X.append(tensor[0][:1000])
+# max_len = max(x.size()[0] for x in X)
+# for i,x in enumerate(X):
+#         X[i] = F.pad(x, (max_len-x.size()[0],0), "constant", 0)
+# cl = []
+# print(len(X))
+# for b in range(int(len(X))):
+#         print(b, X[b].shape)
+#         # X = torch.stack(X[b],dim=0).to(args.device)
+#         c = encoder(X[b].unsqueeze(0), toggle=False)
+#         cl.append(c)
