@@ -25,12 +25,14 @@ repo_to_tensors = pickle.load(training_file)
 args.num_embeddings = len(word_to_i)
 args.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
+print(args.device)
+
 Y_target = torch.LongTensor([0]).to(args.device)
 encoder = Encoder(args.num_embeddings,args.embedding_dim,args.hidden_dim).to(args.device)
-optimizer = optim.Adam(encoder.parameters(), lr=0.0001)
+optimizer = optim.Adam(encoder.parameters(), lr=0.001)
 scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min')
 
-num_samples = 10
+num_samples = 2 
 
 def run(epoch, mode = "train"):
 	
@@ -72,24 +74,50 @@ def run(epoch, mode = "train"):
 				torch.nn.utils.clip_grad_norm_(encoder.parameters(), 0.25)
 				optimizer.step()
 				optimizer.zero_grad()
+		torch.cuda.empty_cache()
 
 	total_loss /= len(repos)
 	score /= len(repos)
 
-	print('iter', epoch, loss.item(), score)
+	print('iter', epoch, loss.item(), score, total_loss)
 
 	if mode == "test":
 		torch.save(encoder, "weights/weights.epoch-%s.loss-%.03f.pt" % (epoch, loss.item()))
 
 	torch.cuda.empty_cache()
-	return loss.item(), score
+	return loss.item(), total_loss, score
 
-for epoch in range(2000):
-	train_loss,train_acc = run(epoch, mode="train")
+losses = []
+for epoch in range(500):
+	train_loss, train_total, train_acc = run(epoch, mode="train")
+	# losses.append((train_loss, train_total, train_acc))
 	test_loss,test_acc = run(epoch, mode="test")
-	if train_loss < 0.5:
-		for e2 in range(10):
-			test_loss,test_acc = run(epoch, mode="test")
-			print (test_loss)
+	scheduler.step(test_loss)
 	# test_loss,test_acc = run(epoch, mode="test")
 	# print(train_loss,train_acc,test_loss,test_acc)
+'''
+X = []
+repos = list(repo_to_tensors.keys())
+for r in repos:
+	for tensor in repo_to_tensors[r][:10]:
+		X.append(tensor[0][:1000])
+max_len = max(x.size()[0] for x in X)
+for i,x in enumerate(X):
+	X[i] = F.pad(x, (max_len-x.size()[0],0), "constant", 0)
+cl = []
+print(len(X))
+for b in range(80):#int(len(X)/10)):
+	print(b, X[b].shape)
+	# X = torch.stack(X[b],dim=0).to(args.device)
+	a = X[b*10:b*10+10]
+	stacked = torch.stack(a,dim=0).to(args.device)
+	c = encoder(stacked, toggle=False)
+	cl.append(c)
+	torch.cuda.empty_cache()
+
+lfile = open('loss.p','wb')
+pickle.dump(losses,lfile,protocol=pickle.HIGHEST_PROTOCOL)
+
+encoded = open('vecs.p','wb')
+pickle.dump(cl,encoded, protocol=pickle.HIGHEST_PROTOCOL)
+'''
