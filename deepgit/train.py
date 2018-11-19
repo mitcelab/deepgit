@@ -3,6 +3,7 @@
 When this script is executed, it should train a model and write the weights
 to `weights/*.pt`.
 """
+import gc
 from model.model import *
 import torch.optim as optim
 from random import choice, sample
@@ -75,6 +76,7 @@ def run(epoch, mode = "train"):
 				optimizer.step()
 				optimizer.zero_grad()
 		torch.cuda.empty_cache()
+		gc.collect()
 
 	total_loss /= len(repos)
 	score /= len(repos)
@@ -82,8 +84,10 @@ def run(epoch, mode = "train"):
 	print('iter', epoch, loss.item(), score, total_loss)
 
 	if mode == "test":
+
 		torch.save(encoder, "weights/weights.epoch-%s.loss-%.03f.pt" % (epoch, loss.item()))
 
+	gc.collect()
 	torch.cuda.empty_cache()
 	return loss.item(), total_loss, score
 
@@ -91,9 +95,8 @@ losses = []
 for epoch in range(500):
 	train_loss, train_total, train_acc = run(epoch, mode="train")
 	# losses.append((train_loss, train_total, train_acc))
-	test_loss,test_acc = run(epoch, mode="test")
+	test_loss,test_total, test_acc = run(epoch, mode="test")
 	scheduler.step(test_loss)
-	# test_loss,test_acc = run(epoch, mode="test")
 	# print(train_loss,train_acc,test_loss,test_acc)
 '''
 X = []
