@@ -134,7 +134,7 @@ for b in range(80):#int(len(X)/10)):
 	stacked = torch.stack(a,dim=0).to(args.device)
 	enc = encoder(stacked, toggle=False)
 	#cl.append(c)
-	xl.extend([vec for vec in enc])
+	xl.extend([vec.to('cpu') for vec in enc])
 	torch.cuda.empty_cache()
 print(len(xl))
 #lfile = open('loss.p','wb')
