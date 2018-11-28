@@ -26,12 +26,14 @@ repo_to_tensors = pickle.load(training_file)
 args.num_embeddings = len(word_to_i)
 args.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
+print(args.device)
+
 Y_target = torch.LongTensor([0]).to(args.device)
 encoder = Encoder(args.num_embeddings,args.embedding_dim,args.hidden_dim).to(args.device)
-optimizer = optim.Adam(encoder.parameters(), lr=0.0001)
+optimizer = optim.Adam(encoder.parameters(), lr=0.001)
 scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min')
 
-num_samples = 10
+num_samples = 2 
 
 def run(epoch, mode = "train"):
 	
@@ -40,46 +42,50 @@ def run(epoch, mode = "train"):
 
 	repos = list(repo_to_tensors.keys())
 	for r in repos:
-		if len(repo_to_tensors[r]) > 1:
-			base_pair = sample(repo_to_tensors[r], 2)
+		try:
+			if len(repo_to_tensors[r]) > 1:
+				base_pair = sample(repo_to_tensors[r], 2)
 
-			base = encoder(base_pair[0].to(args.device), toggle=True)
-			c1 = encoder(base_pair[1].to(args.device), toggle=False)
-			similarity_scores = torch.zeros(1,num_samples+1)
-			similarity_scores[0][0] = torch.dot(base[0],c1[0])
+				base = encoder(base_pair[0].to(args.device), toggle=True)
+				c1 = encoder(base_pair[1].to(args.device), toggle=False)
+				similarity_scores = torch.zeros(1,num_samples+1)
+				similarity_scores[0][0] = torch.dot(base[0],c1[0])
 
-			comp_repos = repos
-			comp_repos.remove(r)
+				comp_repos = repos
+				comp_repos.remove(r)
 
-			X = [choice(repo_to_tensors[choice(comp_repos)])[0][:1000] for i in range(num_samples)]
-			max_len = max(x.size()[0] for x in X)
-			for i, x in enumerate(X):
-				X[i] = F.pad(x, (max_len-x.size()[0],0), "constant", 0)
-			X = torch.stack(X,dim=0).to(args.device)
+				X = [choice(repo_to_tensors[choice(comp_repos)])[0][:1000] for i in range(num_samples)]
+				max_len = max(x.size()[0] for x in X)
+				for i, x in enumerate(X):
+					X[i] = F.pad(x, (max_len-x.size()[0],0), "constant", 0)
+				X = torch.stack(X,dim=0).to(args.device)
 
-			candidate = encoder(X, toggle=False)
-			for i in range(num_samples):
-				# similarity_scores[0][i] = F.cosine_similarity(base,candidate[i].unsqueeze(0))
-				similarity_scores[0][i] = torch.dot(base[0],candidate[i])
+				candidate = encoder(X, toggle=False)
+				for i in range(num_samples):
+					# similarity_scores[0][i] = F.cosine_similarity(base,candidate[i].unsqueeze(0))
+					similarity_scores[0][i] = torch.dot(base[0],candidate[i])
 
-			Y_pred = torch.tensor(similarity_scores)
+				Y_pred = torch.tensor(similarity_scores)
 
-			loss = F.cross_entropy(Y_pred, torch.LongTensor([0]))
-			total_loss += loss.item()
-			score += int(torch.argmax(Y_pred).item() == 0)
+				loss = F.cross_entropy(Y_pred, torch.LongTensor([0]))
+				total_loss += loss.item()
+				score += int(torch.argmax(Y_pred).item() == 0)
 
-			if mode == "train":
-				loss.backward()
-				torch.nn.utils.clip_grad_norm_(encoder.parameters(), 0.25)
-				optimizer.step()
-				optimizer.zero_grad()
-		torch.cuda.empty_cache()
-		gc.collect()
+				if mode == "train":
+					loss.backward()
+					torch.nn.utils.clip_grad_norm_(encoder.parameters(), 0.25)
+					optimizer.step()
+					optimizer.zero_grad()
+		except Exception as e:
+			print (e)
+		finally:
+			torch.cuda.empty_cache()
+			gc.collect()
 
 	total_loss /= len(repos)
 	score /= len(repos)
 
-	print('iter', epoch, loss.item(), score)
+	print('iter', epoch, loss.item(), score, total_loss)
 
 	if mode == "test":
 
@@ -87,26 +93,47 @@ def run(epoch, mode = "train"):
 
 	gc.collect()
 	torch.cuda.empty_cache()
-	return loss.item(), score
+	return loss.item(), total_loss, score
 
-for epoch in range(2000):
-	train_loss,train_acc = run(epoch, mode="train")
-	test_loss,test_acc = run(epoch, mode="test")
+#losses = []
+loss_f = open('losses.txt','w')
+test_f = open('test_losses.txt', 'w')
+for epoch in range(500):
+	train_loss, train_total, train_acc = run(epoch, mode="train")
+	loss_f.write(str(epoch) + ' : ' + str(train_loss) + ' : ' + str(train_total) + ' : ' + str(train_acc) + '\n')
+	test_loss,test_total, test_acc = run(epoch, mode="test")
+	test_f.write(str(epoch) + ' : ' + str(test_loss) + ' : ' + str(test_total) + ' : ' + str(test_acc) + '\n')
 	scheduler.step(test_loss)
-	print(train_loss,train_acc,test_loss,test_acc)
+	# print(train_loss,train_acc,test_loss,test_acc)
 
-# X = []
-# repos = list(repo_to_tensors.keys())
-# for r in repos:
-#         for tensor in repo_to_tensors[r]:
-#                 X.append(tensor[0][:1000])
-# max_len = max(x.size()[0] for x in X)
-# for i,x in enumerate(X):
-#         X[i] = F.pad(x, (max_len-x.size()[0],0), "constant", 0)
-# cl = []
-# print(len(X))
-# for b in range(int(len(X))):
-#         print(b, X[b].shape)
-#         # X = torch.stack(X[b],dim=0).to(args.device)
-#         c = encoder(X[b].unsqueeze(0), toggle=False)
-#         cl.append(c)
+count_f = open('github_count_d.p','rb')
+count_d = pickle.load(count_f)
+
+X = []
+Y = []
+repos = list(repo_to_tensors.keys())
+for r in repos:
+	for tensor in repo_to_tensors[r][:10]:
+		X.append(tensor[0][:1000])
+		Y.append(count_d[r])
+max_len = max(x.size()[0] for x in X)
+for i,x in enumerate(X):
+	X[i] = F.pad(x, (max_len-x.size()[0],0), "constant", 0)
+cl = []
+print(len(X))
+encoder = torch.load('weights/weights.epoch-449.loss-1.141.pt')
+
+for b in range(80):#int(len(X)/10)):
+	print(b, X[b].shape)
+	# X = torch.stack(X[b],dim=0).to(args.device)
+	a = X[b*10:b*10+10]
+	stacked = torch.stack(a,dim=0).to(args.device)
+	c = encoder(stacked, toggle=False)
+	cl.append(c)
+	torch.cuda.empty_cache()
+
+#lfile = open('loss.p','wb')
+#pickle.dump(losses,lfile,protocol=pickle.HIGHEST_PROTOCOL)
+
+encoded = open('vecs.p','wb')
+pickle.dump(cl,encoded, protocol=pickle.HIGHEST_PROTOCOL)

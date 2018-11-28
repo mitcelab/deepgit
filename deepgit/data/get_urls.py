@@ -1,5 +1,6 @@
 import requests
 import os
+import pickle
 
 USERNAME=os.environ['gitusername']
 PASSWORD=os.environ['gitpassword']
@@ -11,8 +12,11 @@ for p in range(10):
 	data.extend(r.json()['items'])
 	
 # print (data[0]['full_name'], data[0]['name'])
-names = open("github_names.txt","w")
+count_d = {}
 with open("github_urls.txt","w") as urls:
 	for d in data:
 		urls.write(d['clone_url']+'\n')
-		names.write(d['full_name'] + ' ' + str(d['watchers_count']) + ' ' + str(d['stargazers_count']) + '\n')
+		count_d[d['name']] = [d['watchers_count'], d['stargazers_count']]
+
+dfile = open("github_count_d.p","wb")
+pickle.dump(count_d, dfile, protocol=pickle.HIGHEST_PROTOCOL)
