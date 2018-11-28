@@ -124,8 +124,7 @@ print(len(X), len(Y))
 max_len = max(x.size()[0] for x in X)
 for i,x in enumerate(X):
 	X[i] = F.pad(x, (max_len-x.size()[0],0), "constant", 0)
-cl = []
-print(len(X))
+xl = []
 encoder = torch.load('weights/weights.epoch-497.loss-0.101.pt')
 
 for b in range(80):#int(len(X)/10)):
@@ -133,12 +132,15 @@ for b in range(80):#int(len(X)/10)):
 	# X = torch.stack(X[b],dim=0).to(args.device)
 	a = X[b*10:b*10+10]
 	stacked = torch.stack(a,dim=0).to(args.device)
-	c = encoder(stacked, toggle=False)
-	cl.append(c)
+	enc = encoder(stacked, toggle=False)
+	#cl.append(c)
+	xl.extend([vec for vec in enc])
 	torch.cuda.empty_cache()
-
+print(len(xl))
 #lfile = open('loss.p','wb')
 #pickle.dump(losses,lfile,protocol=pickle.HIGHEST_PROTOCOL)
+labels_f = open('labels.p','wb')
+pickle.dump(Y[:800], labels_f, protocol=pickle.HIGHEST_PROTOCOL)
 
 encoded = open('vecs.p','wb')
-pickle.dump(cl,encoded, protocol=pickle.HIGHEST_PROTOCOL)
+pickle.dump(xl,encoded, protocol=pickle.HIGHEST_PROTOCOL)
