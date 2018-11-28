@@ -98,6 +98,7 @@ def run(epoch, mode = "train"):
 #losses = []
 loss_f = open('losses.txt','w')
 test_f = open('test_losses.txt', 'w')
+'''
 for epoch in range(500):
 	train_loss, train_total, train_acc = run(epoch, mode="train")
 	loss_f.write(str(epoch) + ' : ' + str(train_loss) + ' : ' + str(train_total) + ' : ' + str(train_acc) + '\n')
@@ -105,7 +106,7 @@ for epoch in range(500):
 	test_f.write(str(epoch) + ' : ' + str(test_loss) + ' : ' + str(test_total) + ' : ' + str(test_acc) + '\n')
 	scheduler.step(test_loss)
 	# print(train_loss,train_acc,test_loss,test_acc)
-
+'''
 count_f = open('github_count_d.p','rb')
 count_d = pickle.load(count_f)
 
@@ -115,25 +116,31 @@ repos = list(repo_to_tensors.keys())
 for r in repos:
 	for tensor in repo_to_tensors[r][:10]:
 		X.append(tensor[0][:1000])
-		Y.append(count_d[r])
+		if r not in count_d:
+			print (r)
+		else:
+			Y.append(count_d[r])
+print(len(X), len(Y))
 max_len = max(x.size()[0] for x in X)
 for i,x in enumerate(X):
 	X[i] = F.pad(x, (max_len-x.size()[0],0), "constant", 0)
-cl = []
-print(len(X))
-encoder = torch.load('weights/weights.epoch-449.loss-1.141.pt')
+xl = []
+encoder = torch.load('weights/weights.epoch-497.loss-0.101.pt')
 
 for b in range(80):#int(len(X)/10)):
 	print(b, X[b].shape)
 	# X = torch.stack(X[b],dim=0).to(args.device)
 	a = X[b*10:b*10+10]
 	stacked = torch.stack(a,dim=0).to(args.device)
-	c = encoder(stacked, toggle=False)
-	cl.append(c)
+	enc = encoder(stacked, toggle=False)
+	#cl.append(c)
+	xl.extend([vec for vec in enc])
 	torch.cuda.empty_cache()
-
+print(len(xl))
 #lfile = open('loss.p','wb')
 #pickle.dump(losses,lfile,protocol=pickle.HIGHEST_PROTOCOL)
+labels_f = open('labels.p','wb')
+pickle.dump(Y[:800], labels_f, protocol=pickle.HIGHEST_PROTOCOL)
 
 encoded = open('vecs.p','wb')
-pickle.dump(cl,encoded, protocol=pickle.HIGHEST_PROTOCOL)
+pickle.dump(xl,encoded, protocol=pickle.HIGHEST_PROTOCOL)
