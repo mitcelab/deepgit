@@ -63,18 +63,11 @@ def makeTensors():
 				except Exception as e:
 					print('skip', path, e)
 
-	print (Counter(word_counts).most_common(100))
 	# create word to index of words across all files
 	for word, count in Counter(word_counts).most_common(6400):
 		word_to_i[word] = len(word_to_i)
 
-	# create tensors
-	# word_lengths = []
-	# for _,doc in word_lists.items():
-	# 	word_lengths.append(len(doc))
-	# plt.hist(x=word_lengths, bins=10, range=(0,10000))
-	# plt.show()
-
+	# create tensor for each file
 	repo_to_tensor = {}
 	count = 0
 	for repo,version in repo_to_file.items():
@@ -94,14 +87,13 @@ def makeTensors():
 			repo_to_tensor[repo] = training_pairs
 	return repo_to_tensor
 
-makeRepoFile('/home/paperspace/repos1/')
-#makeRepoFile('/Users/aaronhuang/repos/')
+# makeRepoFile('/home/paperspace/repos1/')
+makeRepoFile('/Users/aaronhuang/repos/')
 makeRepoDict()
 repo_to_tensor = makeTensors()
-print (repo_to_tensor.keys())
 
-wi_file = open('word_index.p', 'wb')
+wi_file = open('data/processed/word_index.p', 'wb')
 pickle.dump(word_to_i, wi_file, protocol=pickle.HIGHEST_PROTOCOL)
 
-training_file = open('training_pairs.p', 'wb')
+training_file = open('data/processed/training_pairs.p', 'wb')
 pickle.dump(repo_to_tensor, training_file, protocol=pickle.HIGHEST_PROTOCOL)

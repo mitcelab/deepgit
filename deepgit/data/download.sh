@@ -1,9 +1,8 @@
 #!/bin/bash
 while read p; do
 	cd ./repos
-	a="$(cut -d'/' -f4 <<<"$p")"
-	r="$(cut -d'/' -f5 <<<"$p")"
-	fname="$a"_"$(cut -d'.' -f1 <<<"$r")"
+	fname="$(cut -d',' -f1 <<<"$p")"
+	url="$(cut -d',' -f2 <<<"$p")"
 	mkdir "$fname"
 	cd "$fname"
 
@@ -13,7 +12,7 @@ while read p; do
 		mkdir "$i"
 		cd "$i"
 		pwd
-		git clone "$p" .
+		git clone "$url" .
 		echo clone
 		git checkout HEAD~"$i"
 		echo checkout

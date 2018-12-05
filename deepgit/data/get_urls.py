@@ -12,18 +12,18 @@ for p in range(1,15):
 		break
 	data.extend(r.json()['items'])
 
-count_d = {}
-with open("github_urls.txt","w") as urls:
+repo_stats_d = {}
+with open("raw/github_urls.txt","w") as urls:
 	for d in data:
 		if d['language'] and d['language'].lower() in {'python','go','c','c++','c#','javascript'}:
-			urls.write(d['clone_url']+'\n')
-			count_d[d['name']] = {
+			urls.write(f"{d['name']},{d['clone_url']}\n")
+			repo_stats_d[d['name']] = {
 				'stars':d['stargazers_count'],
 				'forks':d['forks_count'],
 				'score':d['score'],
 				'issues':d['open_issues']
 			}
-print (len(count_d))
+print (len(repo_stats_d))
 
-dfile = open("repo_stats_d.p","wb")
-pickle.dump(count_d, dfile, protocol=pickle.HIGHEST_PROTOCOL)
+dfile = open("raw/repo_stats_d.p","wb")
+pickle.dump(repo_stats_d, dfile, protocol=pickle.HIGHEST_PROTOCOL)
