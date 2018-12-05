@@ -1,12 +1,22 @@
 #!/bin/bash
 while read p; do
 	cd ./repos
-	for i in `seq 1 10`;
+	f="$(cut -d'/' -f5 <<<"$p")"
+	echo "$f"
+	mkdir "$f"
+	cd "$f"
+	
+	for i in `seq 1 4`;
 	do
 		pwd
+		mkdir "$i"
 		cd "$i"
-		git clone "$p"
+		pwd
+		git clone "$p" .
+		echo clone
 		git checkout HEAD~"$i"
+		echo checkout
 		cd ..
 	done
-done <urls.txt
+	cd ..
+done <github_urls.txt
