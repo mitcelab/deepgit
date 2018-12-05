@@ -36,12 +36,11 @@ scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min')
 num_samples = 2 
 
 def run(epoch, mode = "train"):
-	
 	total_loss = 0
 	score = 0
 
 	repos = list(repo_to_tensors.keys())
-	for r in repos:
+	for r in repos[:150]:
 		try:
 			if len(repo_to_tensors[r]) > 1:
 				base_pair = sample(repo_to_tensors[r], 2)
@@ -70,7 +69,6 @@ def run(epoch, mode = "train"):
 				loss = F.cross_entropy(Y_pred, torch.LongTensor([0]))
 				total_loss += loss.item()
 				score += int(torch.argmax(Y_pred).item() == 0)
-
 				if mode == "train":
 					loss.backward()
 					torch.nn.utils.clip_grad_norm_(encoder.parameters(), 0.25)
@@ -79,34 +77,32 @@ def run(epoch, mode = "train"):
 		except Exception as e:
 			print (e)
 		finally:
-			torch.cuda.empty_cache()
 			gc.collect()
 
 	total_loss /= len(repos)
 	score /= len(repos)
 
-	print('iter', epoch, loss.item(), score, total_loss)
+	print('iter', epoch, score, loss.item(), total_loss)
 
 	if mode == "test":
-
-		torch.save(encoder, "weights/weights.epoch-%s.loss-%.03f.pt" % (epoch, loss.item()))
+		torch.save(encoder, "weights/weights.epoch-%s.loss-%.03f.pt" % (epoch, total_loss))
 
 	gc.collect()
 	torch.cuda.empty_cache()
-	return loss.item(), total_loss, score
+	return total_loss, score
 
 #losses = []
 loss_f = open('losses.txt','w')
 test_f = open('test_losses.txt', 'w')
-'''
 for epoch in range(500):
-	train_loss, train_total, train_acc = run(epoch, mode="train")
-	loss_f.write(str(epoch) + ' : ' + str(train_loss) + ' : ' + str(train_total) + ' : ' + str(train_acc) + '\n')
-	test_loss,test_total, test_acc = run(epoch, mode="test")
-	test_f.write(str(epoch) + ' : ' + str(test_loss) + ' : ' + str(test_total) + ' : ' + str(test_acc) + '\n')
-	scheduler.step(test_loss)
-	# print(train_loss,train_acc,test_loss,test_acc)
-'''
+	train_total, train_acc = run(epoch, mode="train")
+	print('trained',epoch)
+	loss_f.write(str(epoch) + ' : ' + str(train_total) + ' : ' + str(train_acc) + '\n')
+	test_total, test_acc = run(epoch, mode="test")
+	test_f.write(str(epoch) + ' : ' + str(test_total) + ' : ' + str(test_acc) + '\n')
+	scheduler.step(test_total)
+	#print(train_acc,test_acc)
+
 count_f = open('github_count_d.p','rb')
 count_d = pickle.load(count_f)
 
@@ -144,3 +140,4 @@ pickle.dump(Y[:800], labels_f, protocol=pickle.HIGHEST_PROTOCOL)
 
 encoded = open('vecs.p','wb')
 pickle.dump(xl,encoded, protocol=pickle.HIGHEST_PROTOCOL)
+
