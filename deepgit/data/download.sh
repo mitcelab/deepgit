@@ -1,11 +1,12 @@
 #!/bin/bash
 while read p; do
 	cd ./repos
-	f="$(cut -d'/' -f5 <<<"$p")"
-	echo "$f"
-	mkdir "$f"
-	cd "$f"
-	
+	a="$(cut -d'/' -f4 <<<"$p")"
+	r="$(cut -d'/' -f5 <<<"$p")"
+	fname="$a"_"$(cut -d'.' -f1 <<<"$r")"
+	mkdir "$fname"
+	cd "$fname"
+
 	for i in `seq 1 4`;
 	do
 		pwd
