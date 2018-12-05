@@ -6,11 +6,8 @@ USERNAME=os.environ['gitusername']
 PASSWORD=os.environ['gitpassword']
 
 data = []
-for p in range(1,3):
-	r = requests.get("https://api.github.com/search/repositories?q=topic:Cryptocurrency+language:python+size:<50000+sort=stars+order=desc+page="+str(p)+"+per_page=100", auth=(USERNAME, PASSWORD))
-	data.extend(r.json()['items'])
-for p in range(1,2):
-	r = requests.get("https://api.github.com/search/repositories?q=topic:Cryptocurrency+language:go+size:<50000+sort=stars+order=desc&page="+str(p)+"&per_page=100", auth=(USERNAME, PASSWORD))
+for p in range(1,4):
+	r = requests.get("https://api.github.com/search/repositories?q=topic:Cryptocurrency+language:python&language:go&language:cpp&language:c+stars:>100+size:<100000&sort=stars&order=desc&page="+str(p)+"&per_page=100", auth=(USERNAME, PASSWORD))
 	data.extend(r.json()['items'])
 
 count_d = {}
