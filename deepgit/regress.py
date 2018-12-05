@@ -19,6 +19,7 @@ class Metric(IntEnum):
     WATCHERS=0
     STARGAZERS=1
 
+print (Y_all)
 
 def evaluate(model, target, use_log=False):
     global Y_all
@@ -36,12 +37,14 @@ def evaluate(model, target, use_log=False):
 
 # Watchers
 evaluate(linear_model.LinearRegression(), target=Metric.WATCHERS)
+evaluate(linear_model.LinearRegression(), target=Metric.WATCHERS, use_log=True)
 evaluate(RandomForestRegressor(n_estimators=100), target=Metric.WATCHERS)
 evaluate(RandomForestRegressor(n_estimators=100), target=Metric.WATCHERS, use_log=True)
 
 # Stargazers
 evaluate(linear_model.LinearRegression(), target=Metric.STARGAZERS)
+evaluate(linear_model.LinearRegression(), target=Metric.STARGAZERS, use_log=True)
 evaluate(RandomForestRegressor(n_estimators=100), target=Metric.STARGAZERS)
-evaluate(RandomForestRegressor(n_estimators=100), target=Metric.WATCHERS, use_log=True)
+evaluate(RandomForestRegressor(n_estimators=100), target=Metric.STARGAZERS, use_log=True)
 
 

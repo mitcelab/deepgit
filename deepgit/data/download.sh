@@ -1,6 +1,12 @@
 #!/bin/bash
-
 while read p; do
 	cd ./repos
-	git clone "$p" 
-done <github_urls.txt
+	for i in `seq 1 10`;
+	do
+		pwd
+		cd "$i"
+		git clone "$p"
+		git checkout HEAD~"$i"
+		cd ..
+	done
+done <urls.txt
