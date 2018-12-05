@@ -30,17 +30,17 @@ print(args.device)
 
 Y_target = torch.LongTensor([0]).to(args.device)
 encoder = Encoder(args.num_embeddings,args.embedding_dim,args.hidden_dim).to(args.device)
-optimizer = optim.Adam(encoder.parameters(), lr=0.001)
+optimizer = optim.SGD(encoder.parameters(), lr=0.1, momentum=0.9, weight_decay=5e-4)
 scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min')
 
-num_samples = 2 
+num_samples = 99
 
 def run(epoch, mode = "train"):
 	total_loss = 0
 	score = 0
 
 	repos = list(repo_to_tensors.keys())
-	for r in repos[:150]:
+	for r in repos:
 		try:
 			if len(repo_to_tensors[r]) > 1:
 				base_pair = sample(repo_to_tensors[r], 2)
@@ -96,7 +96,6 @@ loss_f = open('losses.txt','w')
 test_f = open('test_losses.txt', 'w')
 for epoch in range(500):
 	train_total, train_acc = run(epoch, mode="train")
-	print('trained',epoch)
 	loss_f.write(str(epoch) + ' : ' + str(train_total) + ' : ' + str(train_acc) + '\n')
 	test_total, test_acc = run(epoch, mode="test")
 	test_f.write(str(epoch) + ' : ' + str(test_total) + ' : ' + str(test_acc) + '\n')
