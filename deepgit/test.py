@@ -53,7 +53,7 @@ def combine_repo(repo_endpoints, encoded, combine_func=lambda x:torch.mean(x,0))
 	for r,e in repo_endpoints.items():
 		X.append(combine_func(encoded[e[0]:e[1]]))
 		Y.append(stats_d[r])
-	return (X,Y)
+	return ([x.to('cpu') for x in X],Y)
 
 X,repo_endpoints = make_input()
 encoded = encode_inputs(X)
