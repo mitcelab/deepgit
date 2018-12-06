@@ -5,8 +5,9 @@ import gc
 from model.model import *
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--batch_size', type=int, default=100)
+parser.add_argument('--batch_size', type=int, default=10)
 args = parser.parse_args()
+args.device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
 
 pairs_file = open('data/processed/training_pairs.p', 'rb')
 repo_to_tensors = pickle.load(pairs_file)
@@ -30,13 +31,14 @@ def make_input():
 		X[i] = F.pad(x, (max_len-x.size()[0],0), "constant", 0)
 	return (X,repo_endpoints)
 
-def encode_inputs(X, checkpoint = 'weights/weights.epoch-0.loss-0.874.pt'):
-	encoder = torch.load(checkpoint)
+def encode_inputs(X, checkpoint = 'weights/weights.epoch-10.pt'):
+	encoder = torch.load(checkpoint).to(args.device)
 	encoded = None
-	for b in range(8):
+	for b in range(28):
+		print(b)
 		if b*args.batch_size >= len(X):
 			break
-		batch = torch.stack(X[b*args.batch_size:(b+1)*args.batch_size], dim=0)
+		batch = torch.stack(X[b*args.batch_size:(b+1)*args.batch_size], dim=0).to(args.device)
 		curr = torch.cat((encoder(batch, toggle=False),encoder(batch, toggle=True)), dim=1)
 		if encoded is None:
 			encoded = curr
@@ -56,10 +58,10 @@ def combine_repo(repo_endpoints, encoded, combine_func=lambda x:torch.mean(x,0))
 X,repo_endpoints = make_input()
 encoded = encode_inputs(X)
 X,Y = combine_repo(repo_endpoints, encoded)
-print(X,Y)
+print(len(X),len(Y))
 
-# labels_f = open('labels.p','wb')
-# pickle.dump(Y[:800], labels_f, protocol=pickle.HIGHEST_PROTOCOL)
-#
-# encoded = open('vecs.p','wb')
-# pickle.dump(xl,encoded, protocol=pickle.HIGHEST_PROTOCOL)
+x_f = open('data/final/x_encoded.p','wb')
+pickle.dump(X, x_f, protocol=pickle.HIGHEST_PROTOCOL)
+
+y_f = open('data/final/y_stats.p','wb')
+pickle.dump(Y, y_f, protocol=pickle.HIGHEST_PROTOCOL)

@@ -12,6 +12,7 @@ class Encoder(nn.Module):
 
 	def forward(self, x, toggle=True):
 		x = self.embed(x)
+		self.rnn.flatten_parameters()
 		h, _ = self.rnn(x)
 		h = torch.mean(F.selu(h), dim=1)
 		h = torch.cat([torch.mean(x, dim=1), h], dim=1)

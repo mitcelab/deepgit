@@ -87,8 +87,8 @@ def makeTensors():
 			repo_to_tensor[repo] = training_pairs
 	return repo_to_tensor
 
-# makeRepoFile('/home/paperspace/repos1/')
-makeRepoFile('/Users/aaronhuang/repos/')
+makeRepoFile('/home/paperspace/repos/')
+# makeRepoFile('/Users/aaronhuang/repos/')
 makeRepoDict()
 repo_to_tensor = makeTensors()
 
