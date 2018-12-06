@@ -32,9 +32,9 @@ def make_input():
 	return (X,repo_endpoints)
 
 def encode_inputs(X, checkpoint = 'weights/weights.epoch-10.pt'):
-	encoder = torch.load(checkpoint).to(args.device)
 	encoded = None
-	for b in range(28):
+	for b in range(30):
+		encoder = torch.load(checkpoint).to(args.device)
 		print(b)
 		if b*args.batch_size >= len(X):
 			break
@@ -51,6 +51,8 @@ def encode_inputs(X, checkpoint = 'weights/weights.epoch-10.pt'):
 def combine_repo(repo_endpoints, encoded, combine_func=lambda x:torch.mean(x,0)):
 	X,Y = [],[]
 	for r,e in repo_endpoints.items():
+		if e[0] >= len(encoded):
+			break
 		X.append(combine_func(encoded[e[0]:e[1]]))
 		Y.append(stats_d[r])
 	return ([x.to('cpu') for x in X],Y)
