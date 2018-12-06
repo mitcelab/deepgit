@@ -13,7 +13,7 @@ from statistics import mean
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--nb_epochs', type=int, default=32)
+parser.add_argument('--epochs', type=int, default=10)
 parser.add_argument('--candidates', type=int, default=99)
 parser.add_argument('--hidden_dim', type=int, default=300)
 parser.add_argument('--embedding_dim', type=int, default=300)
@@ -45,7 +45,7 @@ def run(epoch, mode = "train"):
 	score,score5 = [],[]
 
 	repos = list(repo_to_tensors.keys())
-	for r in repos[:100]:
+	for r in repos:
 		try:
 			if len(repo_to_tensors[r]) > 1:
 				# calculate base repository
@@ -105,7 +105,7 @@ def run(epoch, mode = "train"):
 
 loss_f = open('logs/train_losses.txt','w')
 test_f = open('logs/test_losses.txt', 'w')
-for epoch in range(args.checkpoint+1,args.checkpoint+11):
+for epoch in range(args.checkpoint+1,args.checkpoint+1+args.epochs):
 	train_total, train_acc1, train_acc5 = run(epoch, mode="train")
 	loss_f.write(f'{epoch} : {train_total} : {train_acc1} : {train_acc5}\n')
 	test_total, test_acc1, test_acc5 = run(epoch, mode="test")
