@@ -31,7 +31,7 @@ def make_input():
 		X[i] = F.pad(x, (max_len-x.size()[0],0), "constant", 0)
 	return (X,repo_endpoints)
 
-def encode_inputs(X, checkpoint = 'weights/weights.epoch-10.pt'):
+def encode_inputs(X, checkpoint = 'weights/weights.epoch-51.pt'):
 	encoded = None
 	for b in range(30):
 		encoder = torch.load(checkpoint).to(args.device)

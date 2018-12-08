@@ -6,7 +6,7 @@ to `weights/*.pt`.
 import gc
 from model.model import *
 import torch.optim as optim
-from random import choice, sample
+from random import choice, sample, random
 import pickle
 import argparse
 from statistics import mean
@@ -69,10 +69,11 @@ def run(epoch, mode = "train"):
 
 				# calculate similarities for all candidates
 				for i in range(num_samples):
-					# similarity_scores[0][i] = F.cosine_similarity(base,candidate[i].unsqueeze(0))
+					#similarity_scores[0][i] = F.cosine_similarity(base,candidate[i].unsqueeze(0))
 					similarity_scores[0][i+1] = torch.dot(base[0],candidate[i])
 				Y_pred = torch.tensor(similarity_scores)
-
+				#if random() < 0.01:
+				#	print(F.softmax(Y_pred, dim=1))
 				loss = F.cross_entropy(Y_pred, torch.LongTensor([0]))
 				total_loss += loss.item()
 				score.append(int(torch.argmax(Y_pred).item() == 0))
