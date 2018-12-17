@@ -7,15 +7,20 @@ from enum import IntEnum
 import math
 import pickle
 import torch
+import matplotlib.pyplot as plt
 
 
 with open('data/final/x_encoded.p','rb') as file:
     X = pickle.load(file)
-    X = [x.detach().numpy()[:100] for x in X]
+    X = [x.detach().numpy()[:10] for x in X]
 with open('data/final/y_stats.p','rb') as file:
     Y_stats = pickle.load(file)
 
-print (Y_stats)
+# print (Y_stats)
+
+def plot():
+    plt.plot(X)
+    plt.show()
 
 def evaluate(model, target, use_log=False):
     Y = [repo[target] for repo in Y_stats]
@@ -29,6 +34,8 @@ def evaluate(model, target, use_log=False):
     r2_test = r2_score(Y_test, model.predict(X_test))
     print(target)
     print (r2_train, r2_test)
+
+plot()
 
 for target in {'stars','forks', 'score', 'issues'}:
     evaluate(linear_model.LinearRegression(), target)

@@ -75,20 +75,21 @@ def makeTensors():
 			training_pairs = []
 			for path in files:
 				if path in word_lists and word_lists[path]:
-					doc_tensor = torch.zeros(1,len(word_lists[path]), dtype=torch.long)
+					doc_tensor = torch.zeros(len(word_lists[path]), dtype=torch.long)
 					for wi, word in enumerate(word_lists[path]):
 						if word in word_to_i:
-							doc_tensor[0][wi] = word_to_i[word]
+							doc_tensor[wi] = word_to_i[word]
 						elif str.isdigit(word):
-							doc_tensor[0][wi] = word_to_i['INTEGER']
+							doc_tensor[wi] = word_to_i['INTEGER']
 						else:
 							word_to_i['UNKNOWN']
 					training_pairs.append(doc_tensor)
-			repo_to_tensor[repo] = training_pairs
+			if len(training_pairs) > 3:
+				repo_to_tensor[repo] = training_pairs
 	return repo_to_tensor
 
-makeRepoFile('/home/paperspace/repos/')
-# makeRepoFile('/Users/aaronhuang/repos/')
+# makeRepoFile('/home/paperspace/repos/')
+makeRepoFile('/Users/aaronhuang/repos/')
 makeRepoDict()
 repo_to_tensor = makeTensors()
 
